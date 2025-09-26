@@ -1,0 +1,314 @@
+#include <windows.h>
+#include <string>
+#include <thread>
+#include "Timer.h"
+#include <assert.h>
+
+bool isRunning = true;
+Timer ft;
+BITMAPINFO bmInfo = {};
+unsigned int* Colors = nullptr;
+
+int xcube = 50;
+int ycube = 50;
+
+void DrawPixel(int x, int y, unsigned char r, unsigned char g, unsigned char b)
+{
+	assert(x > 0);
+	assert(x < bmInfo.bmiHeader.biWidth);
+	assert(y > 0);
+	//assert(y < bmInfo.bmiHeader.biHeight);
+	Colors[y * bmInfo.bmiHeader.biWidth + x] = (r << 16) | (g << 8) | b;
+}
+
+void FillScreenFast(unsigned char r, unsigned char g, unsigned char b)
+{
+	for (unsigned int* i = Colors, *end = &Colors[800 * 600]; i < end; i++)
+	{
+		*i = (r << 16) | (g << 8) | b;
+	}
+}
+
+void ClearScreenHopefullyFaster(unsigned char r, unsigned char g, unsigned char b)
+{
+	unsigned int* Channel = (unsigned int*)Colors;
+	unsigned int MemorySize = 800 * 600;
+	unsigned int* beg = (unsigned int*)Colors;
+	unsigned int* end = beg + MemorySize;
+	for (; beg != end; beg++)
+	{
+		*Channel++ = (r << 16) | (g << 8) | b;
+	}
+}
+
+void ClearScreen(unsigned char r, unsigned char g, unsigned char b)
+{
+	char* Channel = (char*)Colors;
+	/*int Pitch = BitmapWidth;*/
+
+	for (int y = 0; y < bmInfo.bmiHeader.biHeight; ++y)
+	{
+		for (int x = 0; x < bmInfo.bmiHeader.biWidth; ++x)
+		{
+			*Channel = b;
+			Channel++;
+			*Channel = g;
+			Channel++;
+			*Channel = r;
+			Channel++;
+			*Channel = 0;
+			Channel++;
+		}
+	}
+
+}
+
+void DrawRect(int x, int y, int width, int height, unsigned char r, unsigned char g, unsigned char b)
+{
+	for (int sy = 0; sy < height; sy++)
+	{
+		for (int sx = 0; sx < width; sx++)
+		{
+			DrawPixel(x + sx, y + sy, r, g, b);
+		}
+	}
+}
+
+void ResizeDIB(int BitmapWidth, int BitmapHeight)
+{
+	bmInfo.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
+	bmInfo.bmiHeader.biWidth = BitmapWidth;
+	bmInfo.bmiHeader.biHeight = -BitmapHeight;
+	bmInfo.bmiHeader.biPlanes = 1;
+	bmInfo.bmiHeader.biBitCount = 32;	
+	bmInfo.bmiHeader.biCompression = BI_RGB;
+
+	Colors = new unsigned int[BitmapWidth * BitmapHeight];
+
+	char* Channel = (char*)Colors;
+	/*int Pitch = BitmapWidth;*/
+
+	for (int y = 0; y < BitmapHeight;++y)
+		{
+			for (int x = 0; x < BitmapWidth; ++x)
+			{
+				*Channel = 0;
+				Channel++;
+				*Channel = 0;
+				Channel++;
+				*Channel = 0;
+				Channel++;
+				*Channel = 0;
+				Channel++;
+			}
+		}
+
+}	
+
+
+void Win32UpdateWindow(HDC hdc, int BitmapWidth, int BitmapHeight)
+{
+	StretchDIBits(
+		hdc,
+		0,
+		0,
+		BitmapWidth,
+		BitmapHeight,
+		0,
+		0,
+		BitmapWidth,
+		BitmapHeight,
+		Colors,
+		&bmInfo,
+		DIB_RGB_COLORS,
+		SRCCOPY
+	);
+}
+
+LRESULT CALLBACK WndProc(
+	HWND hwnd,
+	UINT msg,
+	WPARAM wParam, //keyboard
+	LPARAM lParam //mouse
+)
+{
+	switch (msg)
+	{
+	case WM_DESTROY:
+	{
+		PostQuitMessage(0); //refuse all resources
+		isRunning = false;
+
+	}break;
+
+	case WM_QUIT:
+	{
+		PostQuitMessage(0);
+		isRunning = false;
+	}break;
+	case WM_SIZE:
+	{
+		RECT rect;
+		GetWindowRect(hwnd, &rect);
+		int WindowWidth = rect.right - rect.left;
+		int WindowHeight = rect.bottom - rect.top;
+		ResizeDIB(WindowWidth, WindowHeight);
+	}break;
+
+	case WM_PAINT:
+	{
+		PAINTSTRUCT pPaintStruct;
+		HDC hdc = BeginPaint(hwnd, &pPaintStruct);
+
+		int WindowWidth = pPaintStruct.rcPaint.right- pPaintStruct.rcPaint.left;
+		int WindowHeight = pPaintStruct.rcPaint.bottom - pPaintStruct.rcPaint.top;
+
+		Win32UpdateWindow(hdc,  WindowWidth,  WindowHeight);
+		EndPaint(hwnd, &pPaintStruct);
+	}break;
+	case WM_KEYDOWN:
+	case WM_KEYUP:
+	{
+		WPARAM VKcode = wParam;
+		if (VKcode == VK_LEFT)
+		{
+			xcube -= 5;
+		}
+		if (VKcode == VK_RIGHT)
+		{
+			xcube += 5;
+		}
+		if (VKcode == VK_UP)
+		{
+			ycube -= 5;
+		}
+		if (VKcode == VK_DOWN)
+		{
+			ycube += 5;
+		}
+	}break;
+	case WM_MOUSEMOVE:
+	{
+		POINTS pt = MAKEPOINTS(lParam);
+		if (pt.x > 0 && pt.x < 800 && pt.y > 0 && pt.y < 600 && VK_MENU)
+		{
+			xcube = pt.x;
+			ycube = pt.y;
+		}
+	}break;
+	case WM_LBUTTONUP:
+	{
+		POINTS pt = MAKEPOINTS(lParam);
+		xcube = pt.x;
+		ycube = pt.y;
+	}break;
+	case WM_LBUTTONDOWN:
+	{
+
+	}break;
+	case WM_RBUTTONUP:
+	{
+
+	}break;
+	case WM_RBUTTONDOWN:
+	{
+
+	}break;
+	
+	}
+	return DefWindowProcA(hwnd, msg, wParam, lParam);
+}
+
+int WINAPI WinMain
+(
+	HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR     lpCmdLine,
+	int       nShowCmd
+)
+
+{
+	const auto pClassName = "WinFramework";
+
+	WNDCLASSEXA wc = {};
+	wc.cbSize = sizeof(wc);
+	wc.style = CS_HREDRAW | CS_VREDRAW;
+	wc.lpfnWndProc = WndProc;
+	wc.cbClsExtra = 0;
+	wc.cbWndExtra = 0;
+	wc.hInstance = hInstance;
+	wc.hIcon = nullptr;
+	wc.hCursor = nullptr;
+	wc.hbrBackground = nullptr;
+	wc.lpszMenuName = nullptr;
+	wc.lpszClassName = pClassName;
+
+	RegisterClassExA(&wc);
+
+	HWND windowHandle =
+		CreateWindowExA(0, pClassName, "WinFramework", WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU, CW_USEDEFAULT, CW_USEDEFAULT,
+			800, 600, nullptr, nullptr, hInstance, nullptr);
+
+	ShowWindow(windowHandle, SW_SHOWDEFAULT);
+
+	const float FPSMS = 1.0f / 30.0f;
+	float bench = 0.0f;
+
+	float x = 0;
+	std::string counter;
+	std::string winName = "Arcanoid Game ";
+	std::string finTitle;
+
+	while (isRunning) //Burning CPU
+	{
+		float delta = ft.Go();
+		bench += delta;
+
+		std::chrono::duration<float>ThreaedSleepTime(FPSMS - bench);
+		if (bench < FPSMS)
+		{
+			std::this_thread::sleep_for(ThreaedSleepTime);
+		}
+		else
+		{
+			bench = 0.0f;
+		}
+		MSG msg;
+		counter = std::to_string(x);
+		finTitle = winName + counter;
+		if (PeekMessageA(
+			&msg,
+			windowHandle,
+			0,
+			0,
+			PM_REMOVE))
+		{
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+		//ClearScreen(255,0,0);
+		auto start = std::chrono::steady_clock::now();
+		//FillScreenFast(0, 0, 0);
+		ClearScreenHopefullyFaster(0, 0, 0);
+		DrawRect(xcube, ycube, 50, 50, 255, 0, 0);
+		auto end = std::chrono::steady_clock::now();
+		std::chrono::duration<float> c = end - start;
+		std::string clout = std::to_string(c.count())+ "\n";
+		OutputDebugStringA(clout.c_str());
+		//float cl = ft.Go();
+		
+		
+
+		SetWindowTextA(windowHandle, finTitle.c_str());
+		x = 1.0f / ThreaedSleepTime.count();
+
+		RECT rect;
+		GetWindowRect(windowHandle, &rect);
+		int WindowWidth = rect.right - rect.left;
+		int WindowHeight = rect.bottom - rect.top;
+		HDC hdc = GetDC(windowHandle);
+		Win32UpdateWindow(hdc, WindowWidth, WindowHeight);
+	}
+	delete[] Colors;
+	return 0;
+}
