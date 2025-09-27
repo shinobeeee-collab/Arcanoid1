@@ -16,13 +16,13 @@ public:
     Ball(const Vec2& p, const Vec2& v);
 
     void Update(float dt);
+    RectF MakeRect(const Vec2& center) const;
     RectF GetRect() const;
     void ReboundX();
     void ReboundY();
     void SetPos(const Vec2& p);
     bool BounceOffBrick(Brick& brick);
 
-    // Траектория
     void PredictTrajectory(const Paddle& paddle, const std::vector<Brick>& bricks, float screenWidth, float screenHeight);
     void DrawTrajectory(Graphics& gfx, int* Colors);
 

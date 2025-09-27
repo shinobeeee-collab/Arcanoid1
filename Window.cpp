@@ -30,7 +30,6 @@ Window::Window(int width, int height, HINSTANCE hInstance)
 
 	ShowWindow(hwnd, SW_SHOWDEFAULT);
 	UpdateWindow(hwnd);
-	// Инициализируем DIB сразу, чтобы буфер был готов к первому кадру
 	ResizeDIB(WindowWidth, WindowHeight);
 }
 

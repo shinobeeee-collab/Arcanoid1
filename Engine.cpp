@@ -44,7 +44,7 @@ void Engine::InitBricks()
 
 void Engine::Run(Window& wnd)
 {
-    float dt = 0.016f; // фиксированный шаг, если нет FrameTimer
+    float dt = 0.016f;
     frameCount++;
     fpsTimer += dt;
 

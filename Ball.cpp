@@ -45,55 +45,104 @@ void Ball::Update(float dt)
     pos = pos + vel * dt;
 }
 
+
+RectF Ball::MakeRect(const Vec2& center) const
+{
+    return RectF(
+        center.x - radius, center.x + radius,
+        center.y - radius, center.y + radius
+    );
+}
+
 // ------------------------ ТРАЕКТОРИЯ ------------------------
-void Ball::PredictTrajectory(const Paddle& paddle, const std::vector<Brick>& bricks, float screenWidth, float screenHeight)
+void Ball::PredictTrajectory(const Paddle& paddle, const std::vector<Brick>& bricks,
+    float screenWidth, float screenHeight)
 {
     trajectoryPoints.clear();
+
+    // --- копия позиции и скорости ---
     Vec2 tempPos = pos;
     Vec2 tempVel = vel;
 
-    for (int i = 0; i < 200; ++i) // максимум шагов прогнозирования
+    const float stepSize = 1.0f;   // маленький шаг
+    const int maxSteps = 300;      // ограничение по количеству шагов
+
+    for (int step = 0; step < maxSteps; ++step)
     {
-        tempPos = tempPos + tempVel * 0.016f; // небольшой dt
+        // движение виртуального шара
+        tempPos = tempPos + tempVel * stepSize * 0.016f;
 
-        // Стены
-        if (tempPos.x - radius < 0) { tempPos.x = radius; tempVel.x = -tempVel.x; }
-        if (tempPos.x + radius > screenWidth) { tempPos.x = screenWidth - radius; tempVel.x = -tempVel.x; }
-        if (tempPos.y - radius < 0) { tempPos.y = radius; tempVel.y = -tempVel.y; }
-        if (tempPos.y + radius > screenHeight) { tempPos.y = screenHeight - radius; tempVel.y = -tempVel.y; }
-
-        // Платформа
-        RectF paddleRect = paddle.GetRect();
-        RectF ballRect(tempPos.x - radius, tempPos.x + radius, tempPos.y - radius, tempPos.y + radius);
-        if (ballRect.IsOverlappingWith(paddleRect))
+        // === стены ===
+        if (tempPos.x - radius <= 0.0f)
         {
-            tempVel.y = -tempVel.y;
-            tempPos.y = paddleRect.top - radius; // чтобы не застрял
+            tempPos.x = radius;
+            tempVel.x = fabsf(tempVel.x);
+        }
+        if (tempPos.x + radius >= screenWidth)
+        {
+            tempPos.x = screenWidth - radius;
+            tempVel.x = -fabsf(tempVel.x);
+        }
+        if (tempPos.y - radius <= 0.0f)
+        {
+            tempPos.y = radius;
+            tempVel.y = fabsf(tempVel.y);
+        }
+        if (tempPos.y + radius >= screenHeight)
+        {
+            tempPos.y = screenHeight - radius;
+            tempVel.y = -fabsf(tempVel.y);
         }
 
-        // Кирпичи
+        // === прямоугольник виртуального шара через MakeRect ===
+        RectF tempRect = MakeRect(tempPos);
+
+        // === платформа ===
+        if (tempRect.IsOverlappingWith(paddle.GetRect()))
+        {
+            tempVel.y = -fabsf(tempVel.y);
+            tempPos.y = paddle.GetRect().top - radius;
+            tempRect = MakeRect(tempPos); // обновляем rect после изменения позиции
+        }
+
+        // === кирпичи ===
         for (const auto& brick : bricks)
         {
             if (brick.destroyed) continue;
-            RectF brickRect = brick.GetRect();
-            if (ballRect.IsOverlappingWith(brickRect))
+
+            if (tempRect.IsOverlappingWith(brick.GetRect()))
             {
-                float overlapLeft = tempPos.x + radius - brickRect.left;
-                float overlapRight = brickRect.right - (tempPos.x - radius);
-                float overlapTop = tempPos.y + radius - brickRect.top;
-                float overlapBottom = brickRect.bottom - (tempPos.y - radius);
+                float overlapLeft = (tempPos.x + radius) - brick.GetRect().left;
+                float overlapRight = brick.GetRect().right - (tempPos.x - radius);
+                float overlapTop = (tempPos.y + radius) - brick.GetRect().top;
+                float overlapBottom = brick.GetRect().bottom - (tempPos.y - radius);
 
-                bool ballFromLeft = overlapLeft < overlapRight;
-                bool ballFromTop = overlapTop < overlapBottom;
+                float minOverlapX = std::min(overlapLeft, overlapRight);
+                float minOverlapY = std::min(overlapTop, overlapBottom);
 
-                float minOverlapX = ballFromLeft ? overlapLeft : overlapRight;
-                float minOverlapY = ballFromTop ? overlapTop : overlapBottom;
+                if (minOverlapX < minOverlapY)
+                {
+                    tempVel.x = -tempVel.x;
+                    if (overlapLeft < overlapRight)
+                        tempPos.x = brick.GetRect().left - radius;
+                    else
+                        tempPos.x = brick.GetRect().right + radius;
+                }
+                else
+                {
+                    tempVel.y = -tempVel.y;
+                    if (overlapTop < overlapBottom)
+                        tempPos.y = brick.GetRect().top - radius;
+                    else
+                        tempPos.y = brick.GetRect().bottom + radius;
+                }
 
-                if (minOverlapX < minOverlapY) tempVel.x = -tempVel.x;
-                else tempVel.y = -tempVel.y;
+                // обновляем rect после изменения позиции
+                tempRect = MakeRect(tempPos);
             }
         }
 
+        // сохраняем точку в траекторию
         trajectoryPoints.push_back(tempPos);
     }
 }
@@ -101,7 +150,7 @@ void Ball::PredictTrajectory(const Paddle& paddle, const std::vector<Brick>& bri
 void Ball::DrawTrajectory(Graphics& gfx, int* Colors)
 {
     for (auto& p : trajectoryPoints)
-        gfx.DrawPixel(Colors, int(p.x), int(p.y), 123, 255, 0); 
+        gfx.DrawPixel(Colors, int(p.x), int(p.y), 255, 255, 255); 
 }
 
 // ------------------------ Рисуем мяч ------------------------
