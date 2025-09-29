@@ -5,6 +5,7 @@
 #include "Paddle.h"
 #include "Brick.h"
 #include <vector>
+#include "Window.h"
 
 class Ball
 {

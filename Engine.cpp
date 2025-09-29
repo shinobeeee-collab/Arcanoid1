@@ -71,6 +71,16 @@ void Engine::Update(Window& wnd, float dt)
 {
     // Двигаем платформу
     paddle.Update(dt, wnd.kbd.KeyIsPressed(VK_LEFT), wnd.kbd.KeyIsPressed(VK_RIGHT), 800.0f);
+    bool aKeyPressed = wnd.kbd.KeyIsPressed('A');
+
+    if (aKeyPressed && !aKeyPrevState)
+    {
+        // Меняем направление мяча только при первом нажатии
+        ball.ReboundY();
+        ball.ReboundX();
+    }
+
+    aKeyPrevState = aKeyPressed; // сохраняем состояние клавиши для следующего кадра
 
     if (wnd.kbd.KeyIsPressed(VK_SHIFT))
     {
@@ -99,7 +109,6 @@ void Engine::Update(Window& wnd, float dt)
             if (ball.BounceOffBrick(brick))
                 break;
         }
-
 
         // Коллизия со стенами
         if (ball.pos.x - Ball::radius < 0.0f) { ball.pos.x = Ball::radius; ball.ReboundX(); }

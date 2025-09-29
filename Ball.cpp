@@ -21,8 +21,8 @@ bool Ball::BounceOffBrick(Brick& brick)
     auto b = GetRect();
     auto r = brick.GetRect();
 
-    float overlapX = std::min(b.right - r.left, r.right - b.left);
-    float overlapY = std::min(b.bottom - r.top, r.bottom - b.top);
+    float overlapX = min(b.right - r.left, r.right - b.left);
+    float overlapY = min(b.bottom - r.top, r.bottom - b.top);
 
     if (overlapX < overlapY) ReboundX();
     else ReboundY();
@@ -117,8 +117,8 @@ void Ball::PredictTrajectory(const Paddle& paddle, const std::vector<Brick>& bri
                 float overlapTop = (tempPos.y + radius) - brick.GetRect().top;
                 float overlapBottom = brick.GetRect().bottom - (tempPos.y - radius);
 
-                float minOverlapX = std::min(overlapLeft, overlapRight);
-                float minOverlapY = std::min(overlapTop, overlapBottom);
+                float minOverlapX = min(overlapLeft, overlapRight);
+                float minOverlapY = min(overlapTop, overlapBottom);
 
                 if (minOverlapX < minOverlapY)
                 {
