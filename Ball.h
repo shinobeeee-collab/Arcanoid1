@@ -29,6 +29,8 @@ public:
 
     void Draw(Graphics& gfx, int* Colors, float screenWidth, float screenHeight);
 
+    void CheckPolySphereCollision(Ball& ball, Paddle& paddle);
+
 private:
     std::vector<Vec2> trajectoryPoints;
 };

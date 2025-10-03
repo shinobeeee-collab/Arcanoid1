@@ -19,9 +19,12 @@ void Graphics::ClearScreenSuperFast(int* Colors)
 
 void Graphics::DrawPixel(int* Colors, int x, int y, unsigned char r, unsigned char g, unsigned char b)
 {
-    //assert(x >= 0 && x < 800 && y >= 0 && y < 600);
-    Colors[y * 800 + x] = (r << 16) | (g << 8) | b;
+    if (x >= 0 && x < 800 && y >= 0 && y < 600)
+    {
+        Colors[y * 800 + x] = (r << 16) | (g << 8) | b;
+    }
 }
+
 
 void Graphics::DrawCircle(int* Colors, int cx, int cy, int radius, unsigned char r, unsigned char g, unsigned char b)
 {

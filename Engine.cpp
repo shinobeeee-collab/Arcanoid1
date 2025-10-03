@@ -12,7 +12,7 @@ static float Clamp(float val, float minVal, float maxVal)
 
 Engine::Engine(Window& wnd)
     : Colors(wnd.GetColorBuffer()),
-    ball(Vec2(400.0f, 300.0f), Vec2(200.0f, -200.0f)),
+    ball(Vec2(400.0f, 300.0f), Vec2(7.0f, 7.0f)),
     paddle(Vec2(400.0f, 550.0f), 200.0f, 20.0f),
     fpsTimer(0.0f),
     frameCount(0)
@@ -100,11 +100,13 @@ void Engine::Update(Window& wnd, float dt)
         // Коллизия с платформой
         if (ball.GetRect().IsOverlappingWith(paddle.GetRect()))
         {
+            //ball.vel.x *= 0.5;
+            //ball.vel.y *= 1.5;
             ball.ReboundY();
             ball.pos.y = paddle.pos.y - paddle.height / 2 - Ball::radius;
         }
 
-        for (auto& brick : bricks)
+         for (auto& brick : bricks)
         {
             if (ball.BounceOffBrick(brick))
                 break;
@@ -112,9 +114,9 @@ void Engine::Update(Window& wnd, float dt)
 
         // Коллизия со стенами
         if (ball.pos.x - Ball::radius < 0.0f) { ball.pos.x = Ball::radius; ball.ReboundX(); }
-        if (ball.pos.x + Ball::radius > 800.0f) { ball.pos.x = 800.0f - Ball::radius; ball.ReboundX(); }
-        if (ball.pos.y - Ball::radius < 0.0f) { ball.pos.y = Ball::radius; ball.ReboundY(); }
-        if (ball.pos.y + Ball::radius > 600.0f) { ball.pos.y = 600.0f - Ball::radius; ball.ReboundY(); }
+        if (ball.pos.x + Ball::radius > 785.0f) { ball.pos.x = 785.0f - Ball::radius; ball.ReboundX(); }
+        if (ball.pos.y - (Ball::radius) < 0.0f) { ball.pos.y = Ball::radius; ball.ReboundY(); }
+        if (ball.pos.y + (Ball::radius) > 565.0f) { ball.pos.y = 565.0f - Ball::radius; ball.ReboundY(); }
     }
 }
 

@@ -29,4 +29,6 @@ private:
 
     float fpsTimer;
     int frameCount;
+
+    bool aKeyPrevState = false;//ƒл€ изменени€ направлени€ м€ча
 };

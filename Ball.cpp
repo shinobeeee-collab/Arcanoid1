@@ -63,9 +63,10 @@ void Ball::PredictTrajectory(const Paddle& paddle, const std::vector<Brick>& bri
     // --- копия позиции и скорости ---
     Vec2 tempPos = pos;
     Vec2 tempVel = vel;
+    float tempRadius = radius;
 
     const float stepSize = 1.0f;   // маленький шаг
-    const int maxSteps = 300;      // ограничение по количеству шагов
+    const int maxSteps = 25;      // ограничение по количеству шагов
 
     for (int step = 0; step < maxSteps; ++step)
     {
@@ -78,7 +79,7 @@ void Ball::PredictTrajectory(const Paddle& paddle, const std::vector<Brick>& bri
             tempPos.x = radius;
             tempVel.x = fabsf(tempVel.x);
         }
-        if (tempPos.x + radius >= screenWidth)
+        if (tempPos.x + radius >= 785.0f)
         {
             tempPos.x = screenWidth - radius;
             tempVel.x = -fabsf(tempVel.x);
@@ -88,7 +89,7 @@ void Ball::PredictTrajectory(const Paddle& paddle, const std::vector<Brick>& bri
             tempPos.y = radius;
             tempVel.y = fabsf(tempVel.y);
         }
-        if (tempPos.y + radius >= screenHeight)
+        if (tempPos.y + radius >= 565.0f)
         {
             tempPos.y = screenHeight - radius;
             tempVel.y = -fabsf(tempVel.y);
@@ -166,4 +167,7 @@ void Ball::Draw(Graphics& gfx, int* Colors, float screenWidth, float screenHeigh
                 gfx.DrawPixel(Colors, x, y, 255, 0, 0);
         }
     }
+}
+void Ball::CheckPolySphereCollision(Ball& ball, Paddle& paddle)
+{
 }
